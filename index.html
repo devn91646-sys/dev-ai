@@ -1,0 +1,736 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b14">
+<title>Dev Assistant - Your AI Helper</title>
+
+<style>
+:root {
+  --bg: #080b14;
+  --panel: #101625;
+  --panel2: #151d30;
+  --text: #f4f7ff;
+  --muted: #98a5bd;
+  --accent: #7c6cff;
+  --cyan: #37d9ff;
+  --border: rgba(255,255,255,.09);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 15% 0%, #25205a 0, transparent 38%),
+    radial-gradient(ellipse at 100% 80%, #10354a 0, transparent 35%),
+    var(--bg);
+  font-family: Inter, system-ui, Arial, sans-serif;
+}
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+header {
+  height: 76px;
+  padding: 0 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,11,20,.7);
+  backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.brand { display: flex; gap: 12px; align-items: center; }
+.logo {
+  width: 43px; height: 43px; border-radius: 15px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg,var(--accent),var(--cyan));
+  color: white; font-size: 23px; font-weight: 900;
+  box-shadow: 0 0 28px #7164ff44;
+}
+.brand h2 { font-size: 18px; margin: 0; }
+.brand small { color: var(--muted); font-size: 11px; }
+.status { color: #6cebb0; font-size: 12px; }
+.status::before {
+  content: ""; display: inline-block; width: 7px; height: 7px;
+  background: #54e6a3; border-radius: 50%; margin-right: 7px;
+}
+
+.layout {
+  width: min(1150px, 94%);
+  margin: 28px auto;
+  display: grid;
+  grid-template-columns: 245px minmax(0,1fr);
+  gap: 22px;
+  flex: 1;
+}
+.sidebar, .chat {
+  border: 1px solid var(--border);
+  background: rgba(15,21,35,.85);
+  border-radius: 23px;
+  overflow: hidden;
+}
+.sidebar { padding: 20px 14px; }
+.section-label {
+  color: var(--muted); font-size: 11px; font-weight: 700;
+  letter-spacing: 1.5px; margin: 6px 10px 13px;
+}
+.side-btn {
+  width: 100%; border: 1px solid transparent;
+  border-radius: 12px; padding: 12px;
+  color: #c8d2e6; background: transparent;
+  text-align: left; margin-bottom: 5px;
+  transition: .2s;
+}
+.side-btn:hover, .side-btn.active {
+  background: var(--panel2); border-color: var(--border);
+  color: white;
+}
+.side-btn span { margin-right: 9px; }
+.tip {
+  margin-top: 25px; padding: 15px;
+  background: linear-gradient(135deg,#30276b66,#154f6066);
+  border: 1px solid var(--border); border-radius: 16px;
+}
+.tip b { font-size: 13px; }
+.tip p { color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+.chat { display: flex; flex-direction: column; min-height: 690px; }
+.chat-head {
+  padding: 18px 22px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.chat-head b { font-size: 14px; }
+.chat-head small { color: var(--muted); font-size: 11px; }
+.clear {
+  border: 1px solid var(--border); background: var(--panel2);
+  color: #d9e1f5; padding: 8px 12px; border-radius: 10px;
+}
+.messages {
+  flex: 1; padding: 25px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 20px;
+  min-height: 400px; max-height: 620px;
+  scroll-behavior: smooth;
+}
+.welcome { text-align: center; padding: 32px 5px 15px; }
+.orb {
+  width: 78px; height: 78px; border-radius: 28px;
+  margin: 0 auto 22px; display: grid; place-items: center;
+  font-size: 37px;
+  background: linear-gradient(135deg,#7c6cff,#35d8ff);
+  box-shadow: 0 0 60px #6e65ff38;
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-7px) rotate(3deg); }
+}
+.welcome h1 { font-size: clamp(25px,4vw,37px); margin: 0 0 12px; }
+.gradient {
+  background: linear-gradient(90deg,#a99cff,#49ddff);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.welcome p { color: var(--muted); line-height: 1.7; font-size: 14px; }
+.suggestions {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-top: 25px; text-align: left;
+}
+.suggestion {
+  border: 1px solid var(--border); background: #151d30;
+  color: #e0e8fb; border-radius: 14px; padding: 14px;
+  font-size: 12px; line-height: 1.6; transition: .2s;
+}
+.suggestion:hover { border-color: var(--accent); transform: translateY(-2px); }
+.suggestion strong { display: block; font-size: 13px; margin-bottom: 4px; }
+
+.message { display: flex; gap: 11px; animation: appear .25s ease; }
+@keyframes appear { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+.message.user { flex-direction: row-reverse; }
+.avatar {
+  flex: 0 0 34px; height: 34px; border-radius: 12px;
+  display: grid; place-items: center; font-size: 16px;
+  background: linear-gradient(135deg,#6659d9,#299cc6);
+}
+.user .avatar { background: #26364d; }
+.bubble {
+  max-width: 85%; padding: 13px 15px;
+  border: 1px solid var(--border); border-radius: 4px 16px 16px;
+  background: #151d30; font-size: 14px; line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.user .bubble { background: #292653; border-radius: 16px 4px 16px 16px; }
+.bubble pre {
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  background: #080d18; padding: 12px; border-radius: 9px;
+}
+.bubble-actions { display: flex; gap: 8px; margin-top: 9px; }
+.mini {
+  background: transparent; border: 1px solid var(--border);
+  color: #c4cfe5; border-radius: 8px; padding: 5px 9px; font-size: 11px;
+}
+.mini:hover { background: #28334a; }
+
+.composer-wrap { padding: 15px 20px 19px; border-top: 1px solid var(--border); }
+.tools { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tool {
+  padding: 7px 11px; border-radius: 10px;
+  background: #161f32; border: 1px solid var(--border);
+  color: #cbd5ea; font-size: 11px;
+}
+.tool.on { border-color: var(--accent); color: #c2baff; }
+.input-row {
+  display: flex; gap: 9px; align-items: flex-end;
+  padding: 8px; border: 1px solid #343753;
+  background: #0b1020; border-radius: 17px;
+  transition: .2s;
+}
+.input-row:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px #7c6cff17; }
+#prompt {
+  flex: 1; resize: none; max-height: 130px; min-height: 42px;
+  border: 0; outline: 0; background: transparent;
+  color: white; padding: 11px 7px;
+}
+#prompt::placeholder { color: #76829c; }
+.icon-btn {
+  width: 42px; height: 42px; flex-shrink: 0;
+  border-radius: 12px; border: 1px solid var(--border);
+  background: #192239; color: white;
+}
+.icon-btn.send {
+  border: 0; background: linear-gradient(135deg,var(--accent),#4a9fff);
+  font-size: 19px;
+}
+.icon-btn:hover { filter: brightness(1.2); }
+.note { color: #77839a; font-size: 10px; text-align: center; margin: 11px 0 0; }
+footer { text-align: center; color: #64718a; font-size: 11px; padding: 5px 15px 20px; }
+
+@media(max-width:760px) {
+  header { padding: 0 4%; height: 67px; }
+  .layout { grid-template-columns: 1fr; width: 94%; margin: 15px auto; gap: 13px; }
+  .sidebar { padding: 10px; display: flex; gap: 7px; overflow-x: auto; }
+  .section-label, .tip { display: none; }
+  .side-btn { white-space: nowrap; width: auto; margin: 0; padding: 10px 12px; }
+  .chat { min-height: 72vh; border-radius: 18px; }
+  .messages { padding: 17px 12px; min-height: 360px; }
+  .composer-wrap { padding: 12px; }
+  .suggestions { grid-template-columns: 1fr; }
+  .welcome { padding-top: 20px; }
+  .bubble { max-width: 90%; font-size: 13px; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+<header>
+  <div class="brand">
+    <div class="logo">D</div>
+    <div>
+      <h2>Dev Assistant <span class="gradient">AI</span></h2>
+      <small>Your smart digital companion</small>
+    </div>
+  </div>
+  <div class="status">Ready to help</div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="section-label">WORKSPACE</div>
+    <button class="side-btn active" data-mode="chat"><span>✦</span> AI Assistant</button>
+    <button class="side-btn" data-mode="math"><span>∑</span> Math Solver</button>
+    <button class="side-btn" data-mode="code"><span>⌘</span> Coding Helper</button>
+    <button class="side-btn" data-mode="study"><span>▤</span> Study Helper</button>
+    <button class="side-btn" id="newChat"><span>＋</span> New Chat</button>
+
+    <div class="tip">
+      <b>✧ Quick Tip</b>
+      <p>Ask clear questions for helpful answers. You can also use your microphone or listen to replies.</p>
+    </div>
+  </aside>
+
+  <main class="chat">
+    <div class="chat-head">
+      <div>
+        <b id="modeTitle">AI Assistant</b><br>
+        <small id="modeSubtitle">Ask anything, learn anything</small>
+      </div>
+      <button class="clear" id="clearChat">Clear ↺</button>
+    </div>
+
+    <div class="messages" id="messages" aria-live="polite">
+      <div class="welcome" id="welcome">
+        <div class="orb">✦</div>
+        <h1>Hello, <span class="gradient">I'm Dev AI</span></h1>
+        <p>Your personal assistant for learning, mathematics, coding<br>
+        and everyday questions.</p>
+
+        <div class="suggestions">
+          <button class="suggestion" data-question="Explain artificial intelligence in simple words">
+            <strong>✧ Learn something</strong>
+            Explain artificial intelligence
+          </button>
+          <button class="suggestion" data-question="Solve 25 * 16 + 40">
+            <strong>∑ Math solver</strong>
+            Solve a math problem
+          </button>
+          <button class="suggestion" data-question="Write a simple HTML page with a heading and button">
+            <strong>⌘ Write code</strong>
+            Create an HTML page
+          </button>
+          <button class="suggestion" data-question="Give me 5 useful science facts">
+            <strong>◈ Discover</strong>
+            Tell me interesting facts
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer-wrap">
+      <div class="tools">
+        <button class="tool" id="voiceToggle">🔊 Voice: On</button>
+        <button class="tool" id="micBtn">🎙 Speak</button>
+        <button class="tool" id="mathBtn">∑ Math</button>
+      </div>
+
+      <form id="chatForm">
+        <div class="input-row">
+          <textarea id="prompt" rows="1" placeholder="Ask Dev Assistant anything..." aria-label="Your question"></textarea>
+          <button class="icon-btn" type="button" id="micIcon" aria-label="Voice input">🎙</button>
+          <button class="icon-btn send" type="submit" aria-label="Send message">➤</button>
+        </div>
+      </form>
+      <p class="note">Dev Assistant can make mistakes. Verify important information.</p>
+    </div>
+  </main>
+</div>
+
+<footer>Made with ♥ by Dev · Dev Assistant AI</footer>
+</div>
+
+<script>
+/*
+  IMPORTANT:
+  Keep this endpoint empty for demo mode.
+  For real AI, use your own secure backend URL.
+  Never put a private API key in this public HTML file.
+
+  Expected backend:
+  POST { "message": "...", "mode": "chat" }
+  Response { "reply": "..." }
+*/
+const AI_ENDPOINT = "";
+
+const messages = document.getElementById("messages");
+const welcome = document.getElementById("welcome");
+const promptBox = document.getElementById("prompt");
+const form = document.getElementById("chatForm");
+
+let mode = "chat";
+let voiceEnabled = true;
+let busy = false;
+
+const modeNames = {
+  chat: ["AI Assistant", "Ask anything, learn anything"],
+  math: ["Math Solver", "Work through math questions"],
+  code: ["Coding Helper", "Learn and build with code"],
+  study: ["Study Helper", "Understand topics step by step"]
+};
+
+function selectMode(nextMode) {
+  mode = nextMode;
+  document.getElementById("modeTitle").textContent = modeNames[mode][0];
+  document.getElementById("modeSubtitle").textContent = modeNames[mode][1];
+
+  document.querySelectorAll("[data-mode]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+
+  promptBox.placeholder = {
+    chat: "Ask Dev Assistant anything...",
+    math: "Enter a math question...",
+    code: "Ask a coding question...",
+    study: "What do you want to learn?"
+  }[mode];
+
+  promptBox.focus();
+}
+
+document.querySelectorAll("[data-mode]").forEach(btn => {
+  btn.addEventListener("click", () => selectMode(btn.dataset.mode));
+});
+
+document.querySelectorAll("[data-question]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    promptBox.value = btn.dataset.question;
+    sendMessage();
+  });
+});
+
+document.getElementById("mathBtn").addEventListener("click", () => {
+  selectMode("math");
+});
+
+document.getElementById("newChat").addEventListener("click", resetChat);
+document.getElementById("clearChat").addEventListener("click", resetChat);
+
+function resetChat() {
+  if (busy) return;
+  messages.replaceChildren();
+  if (welcome) {
+    messages.appendChild(welcome);
+  }
+  window.speechSynthesis?.cancel();
+  promptBox.value = "";
+}
+
+function addMessage(text, who, speak = false) {
+  if (welcome && welcome.parentElement) welcome.remove();
+
+  const wrap = document.createElement("div");
+  wrap.className = "message " + who;
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = who === "user" ? "👤" : "✦";
+
+  const content = document.createElement("div");
+  content.className = "bubble";
+
+  // textContent prevents model replies from being interpreted as HTML.
+  content.textContent = text;
+
+  wrap.append(avatar, content);
+
+  if (who === "assistant") {
+    const actions = document.createElement("div");
+    actions.className = "bubble-actions";
+
+    const speakBtn = document.createElement("button");
+    speakBtn.className = "mini";
+    speakBtn.textContent = "🔊 Listen";
+    speakBtn.addEventListener("click", () => speakText(text));
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "mini";
+    copyBtn.textContent = "📋 Copy";
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = "✓ Copied";
+      } catch {
+        copyBtn.textContent = "Copy unavailable";
+      }
+    });
+
+    actions.append(speakBtn, copyBtn);
+    content.appendChild(actions);
+  }
+
+  messages.appendChild(wrap);
+  messages.scrollTop = messages.scrollHeight;
+
+  if (who === "assistant" && speak && voiceEnabled) speakText(text);
+  return wrap;
+}
+
+function speakText(text) {
+  if (!("speechSynthesis" in window)) {
+    addMessage("Your browser does not support text-to-speech.", "assistant");
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const cleanText = text
+    .replace(/```[\s\S]*?```/g, "Code block omitted.")
+    .replace(/https?:\/\/\S+/g, "link");
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = "en-IN";
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
+document.getElementById("voiceToggle").addEventListener("click", () => {
+  voiceEnabled = !voiceEnabled;
+  const btn = document.getElementById("voiceToggle");
+  btn.textContent = voiceEnabled ? "🔊 Voice: On" : "🔇 Voice: Off";
+  btn.classList.toggle("on", voiceEnabled);
+  if (!voiceEnabled) window.speechSynthesis?.cancel();
+});
+
+let recognition = null;
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function startListening() {
+  if (!SpeechRecognition) {
+    addMessage(
+      "Voice input is not supported in this browser. Try the latest Chrome and allow microphone access.",
+      "assistant"
+    );
+    return;
+  }
+
+  if (recognition) {
+    try { recognition.stop(); } catch {}
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  const micBtn = document.getElementById("micBtn");
+  micBtn.textContent = "🔴 Listening...";
+
+  recognition.onresult = event => {
+    promptBox.value = event.results[0][0].transcript;
+    promptBox.focus();
+  };
+
+  recognition.onerror = event => {
+    addMessage("Microphone error: " + event.error +
+      ". Check browser microphone permission.", "assistant");
+  };
+
+  recognition.onend = () => {
+    micBtn.textContent = "🎙 Speak";
+  };
+
+  try {
+    recognition.start();
+  } catch {
+    micBtn.textContent = "🎙 Speak";
+  }
+}
+
+document.getElementById("micBtn").addEventListener("click", startListening);
+document.getElementById("micIcon").addEventListener("click", startListening);
+
+promptBox.addEventListener("input", () => {
+  promptBox.style.height = "auto";
+  promptBox.style.height = Math.min(promptBox.scrollHeight, 130) + "px";
+});
+
+promptBox.addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  sendMessage();
+});
+
+/* A small demo calculator. This parser supports basic arithmetic
+   without evaluating arbitrary JavaScript. */
+function calculate(expression) {
+  const s = expression.replace(/[×]/g, "*").replace(/[÷]/g, "/").trim();
+
+  if (!s || !/^[\d+\-*/().%\s]+$/.test(s)) {
+    return null;
+  }
+
+  const tokens = s.match(/\d+(?:\.\d+)?|[()+\-*/%]/g);
+  if (!tokens || tokens.join("") !== s.replace(/\s/g, "")) return null;
+
+  let pos = 0;
+
+  function factor() {
+    const t = tokens[pos++];
+
+    if (t === "+") return factor();
+    if (t === "-") return -factor();
+
+    if (t === "(") {
+      const value = expressionValue();
+      if (tokens[pos++] !== ")") throw Error("Missing closing bracket");
+      return value;
+    }
+
+    if (t === undefined || !/^\d+(?:\.\d+)?$/.test(t)) {
+      throw Error("Invalid number");
+    }
+
+    return Number(t);
+  }
+
+  function term() {
+    let value = factor();
+
+    while (["*", "/", "%"].includes(tokens[pos])) {
+      const op = tokens[pos++];
+      const next = factor();
+
+      if ((op === "/" || op === "%") && next === 0) {
+        throw Error("Cannot divide by zero");
+      }
+
+      if (op === "*") value *= next;
+      if (op === "/") value /= next;
+      if (op === "%") value %= next;
+    }
+
+    return value;
+  }
+
+  function expressionValue() {
+    let value = term();
+
+    while (tokens[pos] === "+" || tokens[pos] === "-") {
+      const op = tokens[pos++];
+      const next = term();
+      value = op === "+" ? value + next : value - next;
+    }
+
+    return value;
+  }
+
+  try {
+    const answer = expressionValue();
+    if (pos !== tokens.length || !Number.isFinite(answer)) return null;
+    return Number(answer.toFixed(10)).toString();
+  } catch {
+    return null;
+  }
+}
+
+function demoReply(question, selectedMode) {
+  const q = question.toLowerCase().trim();
+
+  if (/^(hi|hello|hey|hii|namaste)\b/.test(q)) {
+    return "Hello! 👋 Welcome to Dev Assistant. Ask me a question, try a math problem, or explore a coding topic.";
+  }
+
+  if (/who are you|your name|tumhara naam|what can you do/.test(q)) {
+    return "I am Dev Assistant, your digital helper! This website is currently in demo mode. Connect a secure AI backend to enable real AI conversations.";
+  }
+
+  if (selectedMode === "math" || /solve|calculate|what is \d|^\d[\d\s()+*/.%\-×÷]*$/.test(q)) {
+    const expr = question
+      .replace(/^(solve|calculate|what is|what's)\s+/i, "")
+      .replace(/[?=]/g, "")
+      .trim();
+
+    const answer = calculate(expr);
+    if (answer !== null) return "Math Answer\n\n" + expr + " = " + answer +
+      "\n\nThis result was calculated by the built-in demo calculator.";
+
+    return "Enter a basic arithmetic expression such as:\n\n25 * 16 + 40\n(120 + 30) / 5\n50%10\n\nFor word problems, connect an AI backend.";
+  }
+
+  if (selectedMode === "code") {
+    return "Coding Helper 💻\n\nThis is demo mode, so it cannot generate a real AI answer yet.\n\nExample HTML:\n\n<!DOCTYPE html>\n<html>\n<body>\n  <h1>Hello, Dev!</h1>\n  <button>Click me</button>\n</body>\n</html>\n\nConnect your AI backend to ask coding questions interactively.";
+  }
+
+  if (selectedMode === "study") {
+    return "Study Helper 📚\n\nTry asking about mathematics, science, computers, English, or history.\n\nThis demo gives sample guidance only. Connect a secure AI backend for detailed explanations and real answers.";
+  }
+
+  return "Thanks for your question! ✨\n\nDev Assistant is currently running in demo mode. I can demonstrate basic arithmetic, voice input and spoken replies, but I cannot answer arbitrary questions with real AI yet.\n\nTo enable real AI answers, configure a secure backend endpoint in the HTML code. Never expose your private API key on GitHub Pages.";
+}
+
+async function getReply(question, selectedMode) {
+  if (!AI_ENDPOINT) {
+    // Brief delay makes the demo feel more natural.
+    await new Promise(resolve => setTimeout(resolve, 350));
+    return demoReply(question, selectedMode);
+  }
+
+  const response = await fetch(AI_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: question,
+      mode: selectedMode
+    })
+  });
+
+  if (!response.ok) {
+    throw Error("AI service returned HTTP " + response.status);
+  }
+
+  const data = await response.json();
+
+  if (typeof data.reply !== "string") {
+    throw Error("Expected a string named reply from the backend");
+  }
+
+  return data.reply;
+}
+
+async function sendMessage() {
+  const question = promptBox.value.trim();
+  if (!question || busy) return;
+
+  promptBox.value = "";
+  promptBox.style.height = "auto";
+
+  addMessage(question, "user");
+  busy = true;
+
+  const typing = addMessage("Thinking...", "assistant");
+  const bubble = typing.querySelector(".bubble");
+
+  const sendBtn = form.querySelector(".send");
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = ".5";
+
+  try {
+    const reply = await getReply(question, mode);
+
+    // Replace typing indicator with safe text, never HTML.
+    bubble.replaceChildren();
+    bubble.appendChild(document.createTextNode(reply));
+
+    const actions = document.createElement("div");
+    actions.className = "bubble-actions";
+
+    const listen = document.createElement("button");
+    listen.className = "mini";
+    listen.textContent = "🔊 Listen";
+    listen.onclick = () => speakText(reply);
+
+    const copy = document.createElement("button");
+    copy.className = "mini";
+    copy.textContent = "📋 Copy";
+    copy.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(reply);
+        copy.textContent = "✓ Copied";
+      } catch {
+        copy.textContent = "Copy unavailable";
+      }
+    };
+
+    actions.append(listen, copy);
+    bubble.appendChild(actions);
+
+    if (voiceEnabled) speakText(reply);
+  } catch (error) {
+    bubble.textContent =
+      "Sorry, I couldn't reach the AI service. Please check your backend URL, server logs, and network connection.\n\nDetails: " +
+      error.message;
+  } finally {
+    busy = false;
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = "1";
+    messages.scrollTop = messages.scrollHeight;
+    promptBox.focus();
+  }
+}
+</script>
+</body>
+</html>
